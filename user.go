@@ -102,7 +102,11 @@ func (user *User) DoMessage(msg string) {
 //ListenMessage 监听当前User channel的方法，一旦有消息，就直接发送给对端 客户端
 func (user *User) ListenMessage() {
 	for {
-		msg := <-user.C
+		msg, ok := <-user.C
+		if !ok {
+			fmt.Printf("用户%v连接已断开\n", user.Name)
+			return
+		}
 		_, err := user.Conn.Write([]byte(msg + "\n"))
 		if err != nil {
 			fmt.Println("user channel error:", err)
