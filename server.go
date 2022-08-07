@@ -93,7 +93,7 @@ func (server *Server) Handler(conn net.Conn) { //fmt.Println("连接建立成功
 		case <-isLive:
 			//当前用户是活跃的应该重置定时器
 			//不做任何事情，为了激活select，更新下面的定时器
-		case <-time.After(time.Second * 10): //如果channel中有数据可取 则进入
+		case <-time.After(time.Second * 300): //如果channel中有数据可取 则进入
 			//进入 则代表有用户已超时
 			//将该用户强制关闭
 			timeout := "用户:[" + user.Name + "]连接已超时,强制踢出!!"
