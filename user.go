@@ -65,22 +65,19 @@ func (user *User) SendMsg(msg string) {
 
 //DoMessage 用户处理消息的业务
 func (user *User) DoMessage(msg string) {
-	//查询当前所有在线在线用户信息
-	if msg == "who" {
-		user.Server.mapLock.Lock()
-		for _, v := range user.Server.OnlineMap {
-			onlineMsg := "[" + v.Addr + "]" + v.Name + ":在线...\n"
-			user.SendMsg(onlineMsg)
-		}
-		user.Server.mapLock.Unlock()
-	} else if len(msg) > 7 && msg[:7] == "rename|" { //修改用户名校验
+	if len(msg) >= 7 && msg[:7] == "rename|" { //修改用户名校验
 		//消息格式 rename|张三
 		reName := strings.Split(msg, "|")[1]
+		if reName == "" {
+			user.SendMsg("不可输入为空的用户名,请重新输入!!!\n")
+			return
+		}
 		//判断当前name是否存在
 		_, ok := user.Server.OnlineMap[reName]
 		if ok {
-			msgName := "用户名:[" + reName + "]已被使用!!!"
+			msgName := "用户名:[" + reName + "]已被使用!!!\n"
 			user.SendMsg(msgName)
+			return
 		} else { //修改用户名操作
 			//先要删除原来的数据 然后添加一个新数据  否则会出现两个数据
 			user.Server.mapLock.Lock()
@@ -90,10 +87,10 @@ func (user *User) DoMessage(msg string) {
 
 			user.Name = reName
 			//告诉用户，用户名修改成功
-			msgName := "用户名:[" + user.Name + "]修改成功!!!"
+			msgName := "用户名:[" + user.Name + "]修改成功!!!\n"
 			user.SendMsg(msgName)
 		}
-	} else if len(msg) > 4 && msg[:3] == "to|" { //to| 协议  表示跟某个用户私聊
+	} else if len(msg) >= 3 && msg[:3] == "to|" { //to| 协议  表示跟某个用户私聊
 		//消息格式 to|张三|消息内容
 		//1、获取用户姓名
 		toName := strings.Split(msg, "|")[1]
@@ -106,11 +103,13 @@ func (user *User) DoMessage(msg string) {
 			return
 		}
 		//2、根据用户名获取用户的User对象
+		user.Server.mapLock.Lock()
 		nUser, ok := user.Server.OnlineMap[toName]
 		if !ok {
-			user.SendMsg("当前用户名不存在,请输入正确的用户名!!!")
+			user.SendMsg("当前用户名不存在,请输入正确的用户名!!!\n")
 			return
 		}
+		user.Server.mapLock.Unlock()
 		//3、获取消息内容，通过对方的User对象将消息	内容发送过去
 		toContent := strings.Split(msg, "|")[2]
 		if toContent == "" {
@@ -118,6 +117,13 @@ func (user *User) DoMessage(msg string) {
 			return
 		}
 		nUser.SendMsg(user.Name + "对您说:" + toContent)
+	} else if len(msg) == 3 && msg[:3] == "all" { //查询当前所有在线在线用户信息
+		user.Server.mapLock.Lock()
+		for _, v := range user.Server.OnlineMap {
+			onlineMsg := "[" + v.Addr + "]" + v.Name + ":在线...\n"
+			user.SendMsg(onlineMsg)
+		}
+		user.Server.mapLock.Unlock()
 	} else {
 		//将得到的消息进行广播
 		user.Server.BroadCast(user, msg)

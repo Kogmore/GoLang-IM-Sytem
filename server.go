@@ -78,8 +78,13 @@ func (server *Server) Handler(conn net.Conn) { //fmt.Println("连接建立成功
 				return
 			}
 			//提取用户的消息(去除'\n')
-			msg := string(buf)
+			msg := string(buf[:n-1])
+			if len(msg) == 0 {
+				user.SendMsg("不可输入为空消息!!!\n")
+				continue
+			}
 			//用户针对msg进行消息处理
+			fmt.Printf("Handler | msg = %s, len = %d\n", msg, n)
 			user.DoMessage(msg)
 
 			//用户的任意消息 代表用户是活跃的
