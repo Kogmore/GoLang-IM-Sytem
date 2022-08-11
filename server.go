@@ -71,18 +71,18 @@ func (server *Server) Handler(conn net.Conn) { //fmt.Println("连接建立成功
 			if n == 0 {
 				//用户下线广播
 				user.Offline()
-				return
+				break
 			}
 			if err != nil && err != io.EOF {
 				fmt.Println("Conn Read error:", err)
-				return
+				break
 			}
 			//提取用户的消息(去除'\n')
 			msg := string(buf[:n-1])
-			if len(msg) == 0 {
-				user.SendMsg("不可输入为空消息!!!\n")
-				continue
-			}
+			//if len(msg) == 0 { //该校验交给前端
+			//	user.SendMsg("不可输入为空消息!!!\n")
+			//	continue
+			//}
 			//用户针对msg进行消息处理
 			fmt.Printf("Handler | msg = %s, len = %d\n", msg, n)
 			user.DoMessage(msg)

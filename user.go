@@ -65,13 +65,13 @@ func (user *User) SendMsg(msg string) {
 
 //DoMessage 用户处理消息的业务
 func (user *User) DoMessage(msg string) {
-	if len(msg) >= 7 && msg[:7] == "rename|" { //修改用户名校验
+	if len(msg) > 7 && msg[:7] == "rename|" { //修改用户名校验
 		//消息格式 rename|张三
 		reName := strings.Split(msg, "|")[1]
-		if reName == "" {
-			user.SendMsg("不可输入为空的用户名,请重新输入!!!\n")
-			return
-		}
+		//if reName == "" {
+		//	user.SendMsg("不可输入为空的用户名,请重新输入!!!\n")
+		//	return
+		//}
 		//判断当前name是否存在
 		_, ok := user.Server.OnlineMap[reName]
 		if ok {
@@ -105,18 +105,18 @@ func (user *User) DoMessage(msg string) {
 		//2、根据用户名获取用户的User对象
 		user.Server.mapLock.Lock()
 		nUser, ok := user.Server.OnlineMap[toName]
+		user.Server.mapLock.Unlock()
 		if !ok {
 			user.SendMsg("当前用户名不存在,请输入正确的用户名!!!\n")
 			return
 		}
-		user.Server.mapLock.Unlock()
 		//3、获取消息内容，通过对方的User对象将消息	内容发送过去
 		toContent := strings.Split(msg, "|")[2]
 		if toContent == "" {
 			user.SendMsg("不能发送为空的消息!!!\n")
 			return
 		}
-		nUser.SendMsg(user.Name + "对您说:" + toContent)
+		nUser.SendMsg(user.Name + "对您说:" + toContent + "\n")
 	} else if len(msg) == 3 && msg[:3] == "all" { //查询当前所有在线在线用户信息
 		user.Server.mapLock.Lock()
 		for _, v := range user.Server.OnlineMap {
@@ -136,12 +136,12 @@ func (user *User) ListenMessage() {
 		msg, ok := <-user.C
 		if !ok {
 			fmt.Printf("用户%v连接已断开\n", user.Name)
-			return
+			break
 		}
 		_, err := user.Conn.Write([]byte(msg + "\n"))
 		if err != nil {
 			fmt.Println("user channel error:", err)
-			return
+			break
 		}
 	}
 }
